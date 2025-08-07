@@ -6,9 +6,8 @@ from app.crud.user import create_user, get_user_by_email, create_activation_toke
 from app.services.email import send_activation_email
 from app.tasks.user import remove_expired_tokens_task
 from app.core.security import get_password_hash
-from app.models.user import User
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/register", response_model=UserResponse)
