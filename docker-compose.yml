@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: "postgresql://user:password@db:5432/mydatabase"
+      SMTP_SERVER: mailhog
+      SMTP_PORT: 1025
+      SMTP_FROM_EMAIL: test@online-cinema.com
+    depends_on:
+      - db
+      - mailhog
+      - redis
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"
+      -
