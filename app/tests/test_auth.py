@@ -3,6 +3,8 @@ from app.main import app
 from app.core.database import get_db, Base, engine
 from app.models.user import UserGroup
 from sqlalchemy.orm import sessionmaker
+from app.models.user import User, ActivationToken
+
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -34,26 +36,28 @@ def teardown_test_db():
 
 
 def test_user_registration():
+    teardown_test_db()
     setup_test_db()
     response = client.post(
         "/api/v1/auth/register",
-        json={"email": "test@example.com", "password": "password123"}
+        json={"email": "alopar632@gmail.com", "password": "password123"}
     )
     assert response.status_code == 200
-    assert response.json()["email"] == "test@example.com"
+    assert response.json()["email"] == "alopar632@gmail.com"
     assert response.json()["is_active"] is False
     teardown_test_db()
 
 
 def test_user_registration_email_exists():
+    teardown_test_db()
     setup_test_db()
     client.post(
         "/api/v1/auth/register",
-        json={"email": "test2@example.com", "password": "password123"}
+        json={"email": "alopar632@gmail.com", "password": "password123"}
     )
     response = client.post(
         "/api/v1/auth/register",
-        json={"email": "test2@example.com", "password": "password123"}
+        json={"email": "alopar632@gmail.com", "password": "password123"}
     )
     assert response.status_code == 400
     assert "Email already registered" in response.json()["detail"]
@@ -61,10 +65,11 @@ def test_user_registration_email_exists():
 
 
 def test_user_activation():
+    teardown_test_db()
     setup_test_db()
     register_response = client.post(
         "/api/v1/auth/register",
-        json={"email": "activate@example.com", "password": "password123"}
+        json={"email": "alopar632@gmail.com", "password": "password123"}
     )
     db = TestingSessionLocal()
     token = db.query(ActivationToken).filter_by(user_id=register_response.json()["id"]).first()
@@ -81,7 +86,7 @@ def test_user_activation():
     assert "Account activated successfully" in activation_response.json()["message"]
 
     db = TestingSessionLocal()
-    user = db.query(User).filter_by(email="activate@example.com").first()
+    user = db.query(User).filter_by(email="alopar632@gmail.com").first()
     db.close()
     assert user.is_active is True
 
