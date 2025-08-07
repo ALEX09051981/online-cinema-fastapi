@@ -1,4 +1,6 @@
 from fastapi.testclient import TestClient
+
+from app.core.security import get_password_hash
 from app.main import app
 from app.core.database import get_db, Base, engine
 from app.models.user import UserGroup
@@ -90,4 +92,83 @@ def test_user_activation():
     db.close()
     assert user.is_active is True
 
+    teardown_test_db()
+
+
+def test_successful_login():
+    teardown_test_db()
+    setup_test_db()
+
+    db = TestingSessionLocal()
+    hashed_password = get_password_hash("test_password123")
+    user = User(email="test@example.com", hashed_password=hashed_password, is_active=True)
+    db.add(user)
+    db.commit()
+    db.close()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "test_password123"}
+    )
+
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+    assert "refresh_token" in response.json()
+    assert response.json()["token_type"] == "bearer"
+    teardown_test_db()
+
+
+def test_login_with_incorrect_password():
+    teardown_test_db()
+    setup_test_db()
+
+    db = TestingSessionLocal()
+    hashed_password = get_password_hash("correct_password")
+    user = User(email="test@example.com", hashed_password=hashed_password, is_active=True)
+    db.add(user)
+    db.commit()
+    db.close()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "test@example.com", "password": "wrong_password"}
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect email or password"
+    teardown_test_db()
+
+
+def test_login_with_inactive_account():
+    teardown_test_db()
+    setup_test_db()
+
+    db = TestingSessionLocal()
+    hashed_password = get_password_hash("test_password123")
+    user = User(email="inactive@example.com", hashed_password=hashed_password, is_active=False)
+    db.add(user)
+    db.commit()
+    db.close()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "inactive@example.com", "password": "test_password123"}
+    )
+
+    assert response.status_code == 400
+    assert "Account not activated" in response.json()["detail"]
+    teardown_test_db()
+
+
+def test_login_with_nonexistent_email():
+    teardown_test_db()
+    setup_test_db()
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "nonexistent@example.com", "password": "some_password"}
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Incorrect email or password"
     teardown_test_db()
