@@ -1,8 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UUID
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
 from app.core.database import Base
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class UserGroup(Base):
