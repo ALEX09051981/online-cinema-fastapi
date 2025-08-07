@@ -172,3 +172,4 @@ def test_login_with_nonexistent_email():
     assert response.status_code == 401
     assert response.json()["detail"] == "Incorrect email or password"
     teardown_test_db()
+

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.schemas.user import UserRegistration, ActivationToken, UserResponse, UserLogin
+
+from app.models.user import RefreshToken
+from app.schemas.user import UserRegistration, ActivationToken, UserResponse, UserLogin, TokenRevokeRequest
 from app.core.database import get_db
 from app.crud.user import create_user, get_user_by_email, create_activation_token, get_activation_token
 from app.services.email import send_activation_email
@@ -84,3 +86,20 @@ def login_for_access_token(user_data: UserLogin, db: Session = Depends(get_db)):
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    request: TokenRevokeRequest,
+    db: Session = Depends(get_db)
+):
+    token = db.query(RefreshToken).filter(
+        RefreshToken.token == request.refresh_token
+    ).first()
+
+    if not token:
+        return
+
+    db.delete(token)
+    db.commit()
+
+    return
